@@ -1,0 +1,22 @@
+$TTL 7200
+@   IN  SOA tierra.sistema.test. root.sistema.test. (
+    2024101401  ; Serial
+    3600        ; Refresh
+    1800        ; Retry
+    604800      ; Expire
+    7200        ; Negative Cache TTL
+)
+
+@   IN  NS  tierra.sistema.test.
+@   IN  NS  venus.sistema.test.
+
+; Registros A
+tierra  IN  A   192.168.57.103
+venus   IN  A   192.168.57.102
+marte   IN  A   192.168.57.104
+
+; Alias
+ns1     IN  CNAME   tierra.sistema.test.
+ns2     IN  CNAME   venus.sistema.test.
+mail    IN  CNAME   marte.sistema.test.
+

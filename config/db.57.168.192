@@ -1,0 +1,16 @@
+$TTL 7200
+@   IN  SOA tierra.sistema.test. root.sistema.test. (
+    2024101401  ; Serial
+    3600        ; Refresh
+    1800        ; Retry
+    604800      ; Expire
+    7200        ; Negative Cache TTL
+)
+
+@   IN  NS  tierra.sistema.test.
+
+; Registros PTR
+103     IN  PTR tierra.sistema.test.
+102     IN  PTR venus.sistema.test.
+104     IN  PTR marte.sistema.test.
+
