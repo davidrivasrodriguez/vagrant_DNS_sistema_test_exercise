@@ -14,6 +14,7 @@ $TTL 7200
 tierra  IN  A   192.168.57.103
 venus   IN  A   192.168.57.102
 marte   IN  A   192.168.57.104
+mercurio   IN  A   192.168.57.101
 
 ; Alias
 ns1     IN  CNAME   tierra.sistema.test.

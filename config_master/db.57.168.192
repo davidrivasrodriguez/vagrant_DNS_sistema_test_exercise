@@ -13,4 +13,5 @@ $TTL 7200
 103     IN  PTR tierra.sistema.test.
 102     IN  PTR venus.sistema.test.
 104     IN  PTR marte.sistema.test.
+101     IN  PTR mercurio.sistema.test.
 
