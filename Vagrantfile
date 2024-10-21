@@ -5,7 +5,6 @@ Vagrant.configure("2") do |config|
   config.vm.box = "debian/bookworm64"
 
   config.vm.define "venus" do |slave|
-    slave.vm.synced_folder "./config_slave", "/home/vagrant/shared_files" 
     slave.vm.hostname = "venus.sistema.test"
     slave.vm.network "private_network", ip: "192.168.57.102"
     slave.vm.provision "shell", inline: <<-SHELL
@@ -23,7 +22,6 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "tierra" do |master|
-    master.vm.synced_folder "./config_master", "/home/vagrant/shared_files" 
     master.vm.hostname = "tierra.sistema.test"
     master.vm.network "private_network", ip: "192.168.57.103"
     master.vm.provision "shell", inline: <<-SHELL
