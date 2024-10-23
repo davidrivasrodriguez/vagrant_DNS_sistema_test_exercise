@@ -20,7 +20,6 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "tierra" do |master|
-    master.vm.synced_folder "./config", "/home/vagrant/shared" 
     master.vm.hostname = "tierra.sistema.test"
     master.vm.network "private_network", ip: "192.168.57.103"
     master.vm.provision "shell", inline: <<-SHELL
@@ -29,14 +28,36 @@ Vagrant.configure("2") do |config|
 
     apt-get install -y bind9 bind9utils
   SHELL
-  end
-
 end
 
 ```
 
 
-Luego configuramos cada uno de los archivos necesarios para los DNS
+Luego configuramos cada uno de los archivos necesarios para los DNS en master segun los requerimientos que se nos pide
+
+/etc/default/named 
+```
+#
+# run resolvconf?
+RESOLVCONF=no
+
+# startup options for the server | ONLY LISTEN IPV4
+OPTIONS="-u bind -4"
+
+```
+
+/etc/bind/named.conf.local
+```
+zone "sistema.test" {
+    type master;
+    file "/var/lib/bind/db.sistema.test";
+};
+
+zone "57.168.192.in-addr.arpa" {
+    type master;
+    file "/var/lib/bind/db.57.168.192";
+};
+```
 
 /etc/bind/named.conf.options
 ```
@@ -46,17 +67,17 @@ options {
     listen-on-v6 { none; };
     dnssec-validation yes;
 
-    acl "trusted" {
-        127.0.0.1;
-        192.168.57.0/24;
-    };
-
     allow-recursion { trusted; };
-    allow-query { trusted; };
     forwarders {
         208.67.222.222;
     };
     forward only;
+    allow-query { trusted; };
+};
+
+acl "trusted" {
+    127.0.0.1;
+    192.168.57.0/24;
 };
 
 ```
@@ -79,6 +100,7 @@ $TTL 7200
 tierra  IN  A   192.168.57.103
 venus   IN  A   192.168.57.102
 marte   IN  A   192.168.57.104
+mercurio   IN  A   192.168.57.101
 
 ; Alias
 ns1     IN  CNAME   tierra.sistema.test.
@@ -105,14 +127,16 @@ $TTL 7200
 103     IN  PTR tierra.sistema.test.
 102     IN  PTR venus.sistema.test.
 104     IN  PTR marte.sistema.test.
+101     IN  PTR mercurio.sistema.test.
 
 ```
+
 
 Traemos los archivos al repositorio local para posteriormente enlazarlos en el provision para que 
 se implementen automaticamente sin tener que hacerlo de forma manual.
-Por ejemplo podemos sincronizar una carpeta de la maquina con una de nuestro repositorio local
+Por ejemplo podemos copiar los archivos desde la maquina a la carpeta de nuestro repositorio local
 ```
-    master.vm.synced_folder "./config", "/home/vagrant/shared" 
+    cp {archivoDeseado} ./vagrant/{carpetaDestino}
 
 ```
 
@@ -120,13 +144,14 @@ Por ejemplo podemos sincronizar una carpeta de la maquina con una de nuestro rep
 Agregamos a la configuracion de tierra en el Vagrantfile estas lineas para provisionar cuando queramos
 automaticamente todos los ficheros que habiamos modificado anteriormente
 ```
-  #vagrant provision master --provision-with config
+  #vagrant provision tierra --provision-with config
   master.vm.provision "shell", name: "config", inline: <<-SHELL
-    cp /vagrant/config/named /etc/default
-    cp /vagrant/config/named.conf.* /etc/bind
-    cp /vagrant/config/deaw.test.dns /var/lib/bind
-    cp /vagrant/config/192.168.57.dns /var/lib/bind
-    systemctl restart named
+    cp /vagrant/config_master/named /etc/default
+    cp /vagrant/config_master/named.conf /etc/bind
+    cp /vagrant/config_master/named.conf.* /etc/bind
+    cp /vagrant/config_master/db.sistema.test /var/lib/bind
+    cp /vagrant/config_master/db.57.168.192 /var/lib/bind
+    sudo systemctl restart named
   SHELL
   end
 
@@ -150,10 +175,15 @@ Vagrant.configure("2") do |config|
 
       apt-get install -y bind9 bind9utils
     SHELL
+
+    #vagrant provision venus --provision-with config
+  slave.vm.provision "shell", name: "config", inline: <<-SHELL
+    cp /vagrant/config_slave/named.conf.local /etc/bind
+    systemctl restart named
+    SHELL
   end
 
   config.vm.define "tierra" do |master|
-    master.vm.synced_folder "./config", "/home/vagrant/shared" 
     master.vm.hostname = "tierra.sistema.test"
     master.vm.network "private_network", ip: "192.168.57.103"
     master.vm.provision "shell", inline: <<-SHELL
@@ -163,13 +193,14 @@ Vagrant.configure("2") do |config|
     apt-get install -y bind9 bind9utils
   SHELL
 
-  #vagrant provision master --provision-with config
+  #vagrant provision tierra --provision-with config
   master.vm.provision "shell", name: "config", inline: <<-SHELL
-    cp /vagrant/config/named /etc/default
-    cp /vagrant/config/named.conf.* /etc/bind
-    cp /vagrant/config/deaw.test.dns /var/lib/bind
-    cp /vagrant/config/192.168.57.dns /var/lib/bind
-    systemctl restart named
+    cp /vagrant/config_master/named /etc/default
+    cp /vagrant/config_master/named.conf /etc/bind
+    cp /vagrant/config_master/named.conf.* /etc/bind
+    cp /vagrant/config_master/db.sistema.test /var/lib/bind
+    cp /vagrant/config_master/db.57.168.192 /var/lib/bind
+    sudo systemctl restart named
   SHELL
   end
 
