@@ -1,7 +1,9 @@
-# vagrant_DNS_sistema_test_exercise
 
-Primero configuramos el Vagrantfile 
-```
+#VAGRANT MASTER SLAVE EJERCICIO
+
+Primero configuramos el `Vagrantfile`:
+
+```ruby
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
@@ -14,7 +16,6 @@ Vagrant.configure("2") do |config|
     slave.vm.provision "shell", inline: <<-SHELL
       apt-get update
       apt-get upgrade -y
-
       apt-get install -y bind9 bind9utils
     SHELL
   end
@@ -23,20 +24,19 @@ Vagrant.configure("2") do |config|
     master.vm.hostname = "tierra.sistema.test"
     master.vm.network "private_network", ip: "192.168.57.103"
     master.vm.provision "shell", inline: <<-SHELL
-    apt-get update
-    apt-get upgrade -y
-
-    apt-get install -y bind9 bind9utils
-  SHELL
+      apt-get update
+      apt-get upgrade -y
+      apt-get install -y bind9 bind9utils
+    SHELL
+  end
 end
 
 ```
+Luego configuramos cada uno de los archivos necesarios para los DNS en tierra según los requerimientos que se nos pide.
 
+/etc/default/named
 
-Luego configuramos cada uno de los archivos necesarios para los DNS en master segun los requerimientos que se nos pide
-
-/etc/default/named 
-```
+```bash
 #
 # run resolvconf?
 RESOLVCONF=no
@@ -47,7 +47,8 @@ OPTIONS="-u bind -4"
 ```
 
 /etc/bind/named.conf.local
-```
+
+```bash
 zone "sistema.test" {
     type master;
     file "/var/lib/bind/db.sistema.test";
@@ -57,10 +58,12 @@ zone "57.168.192.in-addr.arpa" {
     type master;
     file "/var/lib/bind/db.57.168.192";
 };
+
 ```
 
 /etc/bind/named.conf.options
-```
+
+```bash
 options {
     directory "/var/cache/bind";
     listen-on { 192.168.57.103; };
@@ -81,9 +84,9 @@ acl "trusted" {
 };
 
 ```
-
 /var/lib/bind/db.sistema.test
-```
+
+```bash
 $TTL 7200
 @   IN  SOA tierra.sistema.test. root.sistema.test. (
     2024101401  ; Serial
@@ -109,9 +112,9 @@ mail    IN  CNAME   marte.sistema.test.
 
 ```
 
-
 /var/lib/bind/db.57.168.192
-```
+
+```bash
 $TTL 7200
 @   IN  SOA tierra.sistema.test. root.sistema.test. (
     2024101401  ; Serial
@@ -131,35 +134,44 @@ $TTL 7200
 
 ```
 
+Configuramos este archivo del slave para enlazarlos
+/etc/bind/named.conf.local
 
-Traemos los archivos al repositorio local para posteriormente enlazarlos en el provision para que 
-se implementen automaticamente sin tener que hacerlo de forma manual.
-Por ejemplo podemos copiar los archivos desde la maquina a la carpeta de nuestro repositorio local
-```
-    cp {archivoDeseado} ./vagrant/{carpetaDestino}
+```bash
+zone "sistema.test" {
+    type master;
+    file "/var/lib/bind/db.sistema.test";
+};
 
-```
-
-
-Agregamos a la configuracion de tierra en el Vagrantfile estas lineas para provisionar cuando queramos
-automaticamente todos los ficheros que habiamos modificado anteriormente
-```
-  #vagrant provision tierra --provision-with config
-  master.vm.provision "shell", name: "config", inline: <<-SHELL
-    cp /vagrant/config_master/named /etc/default
-    cp /vagrant/config_master/named.conf /etc/bind
-    cp /vagrant/config_master/named.conf.* /etc/bind
-    cp /vagrant/config_master/db.sistema.test /var/lib/bind
-    cp /vagrant/config_master/db.57.168.192 /var/lib/bind
-    sudo systemctl restart named
-  SHELL
-  end
+zone "57.168.192.in-addr.arpa" {
+    type master;
+    file "/var/lib/bind/db.57.168.192";
+};
 
 ```
 
+Traemos los archivos al repositorio local para posteriormente enlazarlos en el provision para que se implementen automáticamente sin tener que hacerlo de forma manual. Por ejemplo, podemos copiar los archivos desde la máquina a la carpeta de nuestro repositorio local:
 
-Finalmente el archivo Vagrantfile tendria que quedar tal que
+cp {archivoDeseado} ./vagrant/{carpetaDestino}
+
+Agregamos a la configuración de tierra en el Vagrantfile estas líneas para provisionar cuando queramos automáticamente todos los ficheros que habíamos modificado anteriormente:
+
+```ruby
+#vagrant provision tierra --provision-with config
+master.vm.provision "shell", name: "config", inline: <<-SHELL
+  cp /vagrant/config_master/named /etc/default
+  cp /vagrant/config_master/named.conf /etc/bind
+  cp /vagrant/config_master/named.conf.* /etc/bind
+  cp /vagrant/config_master/db.sistema.test /var/lib/bind
+  cp /vagrant/config_master/db.57.168.192 /var/lib/bind
+  sudo systemctl restart named
+SHELL
+
 ```
+
+Finalmente, el archivo Vagrantfile tendría que quedar tal que así:
+
+```ruby
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
@@ -172,14 +184,13 @@ Vagrant.configure("2") do |config|
     slave.vm.provision "shell", inline: <<-SHELL
       apt-get update
       apt-get upgrade -y
-
       apt-get install -y bind9 bind9utils
     SHELL
 
     #vagrant provision venus --provision-with config
-  slave.vm.provision "shell", name: "config", inline: <<-SHELL
-    cp /vagrant/config_slave/named.conf.local /etc/bind
-    systemctl restart named
+    slave.vm.provision "shell", name: "config", inline: <<-SHELL
+      cp /vagrant/config_slave/named.conf.local /etc/bind
+      systemctl restart named
     SHELL
   end
 
@@ -187,23 +198,21 @@ Vagrant.configure("2") do |config|
     master.vm.hostname = "tierra.sistema.test"
     master.vm.network "private_network", ip: "192.168.57.103"
     master.vm.provision "shell", inline: <<-SHELL
-    apt-get update
-    apt-get upgrade -y
+      apt-get update
+      apt-get upgrade -y
+      apt-get install -y bind9 bind9utils
+    SHELL
 
-    apt-get install -y bind9 bind9utils
-  SHELL
-
-  #vagrant provision tierra --provision-with config
-  master.vm.provision "shell", name: "config", inline: <<-SHELL
-    cp /vagrant/config_master/named /etc/default
-    cp /vagrant/config_master/named.conf /etc/bind
-    cp /vagrant/config_master/named.conf.* /etc/bind
-    cp /vagrant/config_master/db.sistema.test /var/lib/bind
-    cp /vagrant/config_master/db.57.168.192 /var/lib/bind
-    sudo systemctl restart named
-  SHELL
+    #vagrant provision tierra --provision-with config
+    master.vm.provision "shell", name: "config", inline: <<-SHELL
+      cp /vagrant/config_master/named /etc/default
+      cp /vagrant/config_master/named.conf /etc/bind
+      cp /vagrant/config_master/named.conf.* /etc/bind
+      cp /vagrant/config_master/db.sistema.test /var/lib/bind
+      cp /vagrant/config_master/db.57.168.192 /var/lib/bind
+      sudo systemctl restart named
+    SHELL
   end
-
 end
 
 ```
