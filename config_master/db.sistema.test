@@ -9,6 +9,7 @@ $TTL 7200
 
 @   IN  NS  tierra.sistema.test.
 @   IN  NS  venus.sistema.test.
+@   IN  MX 10  marte.sistema.test.
 
 ; Registros A
 tierra  IN  A   192.168.57.103
