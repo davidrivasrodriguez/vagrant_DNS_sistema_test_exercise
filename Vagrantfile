@@ -14,8 +14,8 @@ Vagrant.configure("2") do |config|
       apt-get install -y bind9 bind9utils
     SHELL
 
-    #vagrant provision venus --provision-with config
-  slave.vm.provision "shell", name: "config", inline: <<-SHELL
+    #vagrant provision venus --provision-with config_venus
+  slave.vm.provision "shell", name: "config_venus", inline: <<-SHELL
     cp /vagrant/config_slave/named.conf.local /etc/bind
     systemctl restart named
     SHELL
@@ -31,8 +31,8 @@ Vagrant.configure("2") do |config|
     apt-get install -y bind9 bind9utils
   SHELL
 
-  #vagrant provision tierra --provision-with config
-  master.vm.provision "shell", name: "config", inline: <<-SHELL
+  #vagrant provision tierra --provision-with config_tierra
+  master.vm.provision "shell", name: "config_tierra", inline: <<-SHELL
     cp /vagrant/config_master/named /etc/default
     cp /vagrant/config_master/named.conf /etc/bind
     cp /vagrant/config_master/named.conf.* /etc/bind
